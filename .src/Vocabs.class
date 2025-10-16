@@ -1,0 +1,142 @@
+' Gambas class file
+
+Property CurrentVocabNr As Integer Use $CurrentVocabNr
+
+Private $VocabArray As New Vocab[]
+
+Public Sub Export(filename As String)
+
+  Dim f As Stream
+  Dim v As Vocab
+
+  f = Open filename For Output Create
+  For Each v In $VocabArray
+    Print #f, v.Trad & " [" & v.Simp & "] - " & v.Pin & " - " & v.Trans & " [" & CInt(v.Anz) & ", HSK" & v.HSK & "]"
+  Next
+  Close #f
+
+End
+
+Public Function GetCurrentVocab() As Vocab
+
+  Return GetVocab($CurrentVocabNr)
+
+End
+
+Public Function GetFilteredVocab(allvoc As Vocabs, filtertext As String, sortmodus As String) As Integer
+
+  Dim i As Integer
+  Dim v As Vocab
+  Dim f As String = Utils.ConvertPinyin(filtertext)
+
+  If filtertext = "" Then
+    For i = 1 To allvoc.VocabCount()
+      v = allvoc.GetVocab(i)
+      If Utils.IsChinese(v.Trad) Then $VocabArray.Add(v)
+    Next
+  Else If String.Left(filtertext, 1) = "|" And String.Right(filtertext, 1) = "|" And String.Len(filtertext) > 4 Then
+    For i = 1 To allvoc.VocabCount()
+      v = allvoc.GetVocab(i)
+      If Utils.IsChinese(v.Trad) And String.InStr(filtertext, "|" & v.Trad & "|") > 0 Then $VocabArray.Add(v)
+    Next
+  Else
+    For i = 1 To allvoc.VocabCount()
+      v = allvoc.GetVocab(i)
+      If Utils.IsChinese(v.Trad) Then
+        If String.InStr(v.Trad, f, 1, gb.IgnoreCase) > 0 Then
+          $VocabArray.Add(v)
+          Continue
+        Else If String.InStr(v.Simp, f, 1, gb.IgnoreCase) > 0 Then
+          $VocabArray.Add(v)
+          Continue
+        Else If String.InStr(Utils.ConvertPinyin(v.Pin), f, 1, gb.IgnoreCase) > 0 Then
+          $VocabArray.Add(v)
+          Continue
+        Else If String.InStr(v.Trans, f, 1, gb.IgnoreCase) > 0 Then
+          $VocabArray.Add(v)
+          Continue
+        Endif
+      Endif
+    Next
+  Endif
+  Vocab.SetSortModus(sortmodus)
+  $VocabArray.Sort
+  $CurrentVocabNr = 1
+  Return $VocabArray.Count
+
+End
+
+Public Function GetVocab(i As Integer) As Vocab
+
+  If i >= 1 And i <= $VocabArray.Count Then
+    Return $VocabArray[i - 1]
+  Else
+    Return Null
+  Endif
+
+End
+
+Public Function LoadFromSaetze(s As Saetze) As Integer
+
+  Return Import(s.GetVocab())
+
+End
+
+Public Function MaxLen() As Integer
+
+  Dim v As Vocab
+  Dim ml As Integer = 0
+  Dim l As Integer
+
+  For Each v In $VocabArray
+    l = String.Len(v.Trad)
+    ml = Max(l, ml)
+  Next
+  Return ml
+
+End
+
+Public Function SearchFor(trad As String) As String[]
+
+  Dim r As String[] = ["", "", ""]
+  Dim v As Vocab
+
+  For Each v In $VocabArray
+    If v.Trad = trad Then
+      If String.InStr(r[0], v.Simp & "/") = 0 Then r[0] &= v.Simp & "/"
+      If String.InStr(r[1], v.Pin & "/") = 0 Then r[1] &= v.Pin & "/"
+      If String.InStr(r[2], v.Trans & "/") = 0 Then r[2] &= v.Trans & "/"
+    Endif
+  Next
+  If r[0] = "" Then Return Null
+  r[0] = String.Left(r[0], -1)
+  r[1] = String.Left(r[1], -1)
+  r[2] = String.Left(r[2], -1)
+  Return r
+
+End
+
+Public Function VocabCount() As Integer
+
+  Return $VocabArray.Count
+
+End
+
+Private Function Import(zeilen As String[]) As Integer
+
+  Dim zeile As String
+
+  For Each zeile In zeilen
+    If Trim(zeile) <> "" Then
+      Dim s As String[] = Split(zeile, "\t")
+      If s.Max >= 4 Then
+        Dim v As New Vocab
+        v.FillVocab(s)
+        $VocabArray.Add(v)
+      Endif
+    Endif
+  Next
+  $CurrentVocabNr = 1
+  Return $VocabArray.Count
+
+End

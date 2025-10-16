@@ -1,0 +1,18 @@
+' Gambas class file
+
+Private lastmode As String = ""
+
+Public Sub Run() As String
+
+  Me.ShowModal()
+  If Trim(lastmode) = "(Abbruch)" Then lastmode = ""
+  Return lastmode
+
+End
+
+Public Sub lbAutoModes_Click()
+
+  lastmode = lbAutoModes.Current.Text
+  Me.Close
+
+End

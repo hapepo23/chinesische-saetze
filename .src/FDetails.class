@@ -1,0 +1,514 @@
+' Gambas class file
+
+Property ShowAllDecoded As Boolean Use $ShowAllDecoded
+Property ShowData As Boolean Use $ShowData
+
+Private AutoShow As Integer
+Private AutoType As String
+
+Public Sub Reshow()
+
+  Me.Show
+  Me.Form_Open
+
+End
+
+Public Sub _new()
+
+  $ShowAllDecoded = True
+  $ShowData = True
+  AutoType = "1-1-0"
+
+End
+
+Public Sub butEdit_Click()
+
+  Music.Stop
+  Settings.Write(FDetails)
+  Me.Hide
+  FEdit.Show
+
+End
+
+Public Sub butExit_Click()
+
+  Form_Close
+
+End
+
+Public Sub butNextAuto_Click()
+
+  Dim typetext As String
+
+  If butNextAuto.Value Then
+    typetext = FSelectAutoMode.Run()
+    If typetext = "" Then
+      ' Utils.InfoMessage("Nichts gewählt - abgebrochen.")
+      butNextAuto.Value = False
+      Return
+    Endif
+    typetext = Trim(typetext)
+    If typetext <> "0-1-0" And typetext <> "1-1-0" And typetext <> "2-2-2" Then
+      Utils.ErrorMessage("Typ nicht 1-1-0 oder 0-1-0 oder 2-2-2.")
+      butNextAuto.Value = False
+      Return
+    Endif
+    AutoType = typetext
+    StartTimer
+  Else
+    StopTimer
+  Endif
+
+End
+
+Public Sub butNext_Click()
+
+  Music.Stop
+  FMain.GetFilteredSaetze().NextSatz
+  $ShowAllDecoded = True
+  $ShowData = True
+  Form_Open
+
+End
+
+Public Sub butPlayAudio_Click()
+
+  Dim s As Satz = FMain.GetCurrentSatz()
+  Dim mediadir As String = Application.Path & "/.hidden/Media/"
+
+  If Exist(mediadir & s.SoundFile) Then
+    Music.Load(mediadir & s.SoundFile)
+    Music.Play
+  Endif
+
+End
+
+Public Sub butPrevious_Click()
+
+  Music.Stop
+  FMain.GetFilteredSaetze().PrevSatz
+  $ShowAllDecoded = True
+  $ShowData = True
+  Form_Open
+
+End
+
+Public Sub butVok_Click()
+
+  Dim s As Satz = FMain.GetCurrentSatz()
+
+  FVocab.Show
+  FVocab.SetFilterText("|" & s.DecodeTrad)
+
+End
+
+Public Sub daDecodedText_Draw()
+
+  Dim f1 As New Font
+  Dim f2 As New Font
+  Dim s As Satz = FMain.GetCurrentSatz()
+  Dim trad As String[]
+  Dim trans As String[] = Split(s.DecodeTrans, "|")
+  Dim xtrad, ytrad, xtrans, ytrans As New Float[]
+  Dim wtrad, htrad, wtrans, htrans As New Float[]
+  Dim zeile As New Integer[]
+  Dim xmin, xmax, deltax As New Float[] 'zeilen
+  Dim i, z As Integer
+  Dim w, x, deltay As Float
+  Dim maxx As Float
+  Dim maxy As Float
+  Dim lineh1, lineh2 As Integer
+  Dim zeilenabstand, randbreite, wortabstand, linienverschiebung As Integer
+  Dim big As Boolean
+
+  big = (daDecodedText.Height > 500)
+  zeilenabstand = IIf(big, 20, 10)
+  randbreite = IIf(big, 20, 10)
+  wortabstand = 10
+  linienverschiebung = 2
+  maxx = daDecodedText.Width - randbreite
+  maxy = daDecodedText.Height - randbreite
+
+  f2.Name = "Noto Sans CJK TC"
+  f2.Size = IIf(big, 18, 12)
+  Select Case FMain.GetModus()
+    Case "Trad.Z."
+      f1.Name = "AR PL UKai TW"
+      f1.Size = IIf(big, 39, 26)
+      trad = Split(s.DecodeTrad, "|")
+    Case "Simp.Z."
+      f1.Name = "AR PL UKai CN"
+      f1.Size = IIf(big, 39, 26)
+      trad = Split(s.DecodeSimp, "|")
+    Case Else ' Pinyin
+      f1.Name = "Noto Sans CJK TC"
+      f1.Size = IIf(big, 24, 16)
+      f1.Italic = True
+      trad = Split(s.DecodePin, "|")
+  End Select
+
+  If trad.Count < 1 Then Return
+
+  Draw.Begin(daDecodedText)
+  Draw.Font = f1
+  lineh1 = Draw.TextHeight(trad[0])
+  ' Print f1.Name, "H:", FMain.GetModus(), lineh1
+  Draw.Font = f2
+  lineh2 = Draw.TextHeight(trans[0])
+  ' Print f2.Name, "H:", "Translation", lineh2
+
+  x = randbreite
+  z = 0
+  xmin.Add(x)
+  xmax.Add(x)
+  deltax.Add(0)
+  For i = 0 To trad.Max
+    Draw.Font = f1
+    w = Draw.TextWidth(trad[i])
+    htrad.Add(Draw.TextHeight(trad[i]))
+    Draw.Font = f2
+    w = Max(w, Draw.TextWidth(trans[i]))
+    htrans.Add(Draw.TextHeight(trans[i]))
+    wtrad.Add(w)
+    wtrans.Add(w)
+    If x + w > maxx Then
+      deltax[z] = 0.5 * (maxx - xmax[z])
+      z = z + 1
+      x = randbreite
+      xmin.Add(x)
+      xmax.Add(x)
+      deltax.Add(0)
+    End If
+    xtrad.Add(x)
+    ytrad.Add(z * (lineh1 + lineh2 + zeilenabstand))
+    xtrans.Add(x)
+    ytrans.Add(lineh1 + z * (lineh2 + zeilenabstand + lineh1))
+    zeile.Add(z)
+    x = x + w + wortabstand
+    xmax[z] = x
+  Next
+  deltay = 0.5 * (maxy - (ytrans[trad.Max - 1] + htrans[trad.Max - 1]))
+  deltax[z] = 0.5 * (maxx - xmax[z])
+  Draw.Font = f1
+  If $ShowAllDecoded Then
+    For i = 0 To trad.Max
+      Draw.Text(trad[i], xtrad[i] + deltax[zeile[i]], ytrad[i] + deltay, wtrad[i], htrad[i], Align.Top)
+    Next
+  Endif
+  Draw.Font = f2
+  For i = 0 To trans.Max
+    Draw.Line(xtrans[i] + deltax[zeile[i]], ytrans[i] + deltay + linienverschiebung, xtrans[i] + deltax[zeile[i]] + wtrans[i], ytrans[i] + deltay + linienverschiebung)
+    Draw.Text(trans[i], xtrans[i] + deltax[zeile[i]], ytrans[i] + deltay, wtrans[i], htrans[i], Align.Top)
+  Next
+  Draw.End
+
+End
+
+Public Sub daDecodedText_MouseUp()
+
+  If Mouse.Left = True Then
+    If Mouse.X >= 0 And Mouse.Y >= 0 And Mouse.X <= daDecodedText.Width And
+        Mouse.y <= daDecodedText.Height And Not Timer.Enabled Then
+      $ShowAllDecoded = Not $ShowAllDecoded
+      Form_Open
+    Endif
+  Endif
+
+End
+
+Public Sub Form_Close()
+
+  StopTimer
+  Music.Stop
+  Settings.Write(FDetails)
+  Me.Hide
+  'FMain.tbFilter_Change
+  FMain.Show
+  FMain.Reshow
+
+End
+
+Public Sub Form_KeyRelease()
+
+  If Key.Code = Key.Esc Then Me.Close
+
+End
+
+Public Sub Form_Open()
+
+  ' Print "Open", $ShowAllDecoded, $ShowData
+  Dim text As String
+  Dim s As Satz = FMain.GetCurrentSatz()
+  Dim mediadir As String = Application.Path & "/.hidden/Media/"
+
+  If Not Form.Enabled Then Settings.Read(FDetails)
+  If $ShowData Then
+    Select Case FMain.GetModus()
+      Case "Trad.Z."
+        text = "<font size='4' color='darkgreen'>" & s.DecodeSimp2() & "</font><br>"
+        text &= "<font size='2' color='lightgray'>" & Html(s.DecodePin2()) & "</font><br>"
+      Case "Simp.Z."
+        text = "<font size='4' color='darkred'>" & s.DecodeTrad2() & "</font><br>"
+        text &= "<font size='2' color='lightgray'>" & Html(s.DecodePin2()) & "</font><br>"
+      Case Else
+        text = "<font size='4' color='darkred'>" & s.DecodeTrad2() & "</font><br>"
+        text &= "<font size='4' color='darkgreen'>" & s.DecodeSimp2() & "</font><br>"
+    End Select
+    text &= "<font size='3' color='darkblue'>" & Html(s.Translation) & "</font>"
+    text &= "<font size='2' color='darkgray'><br>Vokabeln:<br>" & s.WordHTML & "</font>"
+  Else
+    text = ""
+  Endif
+  lbData.Text = text
+  Me.Title = "Chinesische Sätze - Satz " & CStr(s.Nr) & " - HSK" & s.HSK
+  lbStatus.text = Utils.GetStatusText(s.Status)
+  daDecodedText.Refresh
+  If Exist(mediadir & s.ImageFile) Then
+    pbImage.Picture = Picture[mediadir & s.ImageFile]
+  Else
+    pbImage.Picture = Picture[Application.Path & "/.hidden/Icon/icon.png"]
+  Endif
+  butPlayAudio.Enabled = Exist(mediadir & s.SoundFile)
+  If Music.State = 0 Then
+    If Exist(mediadir & s.SoundFile) Then
+      Music.Load(mediadir & s.SoundFile)
+      Music.Play
+    Endif
+  Endif
+
+End
+
+Public Sub lbData_MouseUp()
+
+  If Mouse.Left = True Then
+    If Mouse.X >= 0 And Mouse.Y >= 0 And Mouse.X <= lbData.Width And
+        Mouse.y <= lbData.Height And Not Timer.Enabled Then
+      $ShowData = Not $ShowData
+      Form_Open
+    Endif
+  Endif
+
+End
+
+Public Sub lbStatus_MouseUp()
+
+  If Mouse.Left = True Then
+    If Mouse.X >= 0 And Mouse.Y >= 0 And Mouse.X <= lbStatus.Width And
+        Mouse.y <= lbStatus.Height And Not Timer.Enabled Then
+      Dim s As Satz = FMain.GetCurrentSatz()
+      s.Status = s.Status + 1
+      If s.Status > 1 Then s.Status = -1
+      Form_Open
+    Endif
+  Endif
+
+End
+
+Public Sub Timer_Timer()
+
+  Dim s As Satz = FMain.GetCurrentSatz()
+  Dim mediadir As String = Application.Path & "/.hidden/Media/"
+  Dim text As String
+
+  If AutoType = "2-2-2" Then
+    Select Case AutoShow
+      Case 0
+        Timer.Delay = 500
+        Me.Title = "Chinesische Sätze - Satz " & CStr(s.Nr) & " - HSK" & s.HSK
+        $ShowAllDecoded = False
+        daDecodedText.Visible = True
+        daDecodedText.Refresh
+        butPlayAudio_Click
+        If Exist(mediadir & s.ImageFile) Then
+          pbImage.Picture = Picture[mediadir & s.ImageFile]
+        Else
+          pbImage.Picture = Picture[Application.Path & "/.hidden/Icon/icon.png"]
+        Endif
+        AutoShow = 1
+      Case 1
+        If Music.State = 0 Then
+          AutoShow = 2
+          Timer.Delay = 5000
+        End If
+      Case 2
+        Timer.Delay = 500
+        butPlayAudio_Click
+        AutoShow = 3
+      Case 3
+        If Music.State = 0 Then
+          AutoShow = 4
+          Timer.Delay = 5000
+        End If
+      Case 4
+        Timer.Delay = 500
+        $ShowAllDecoded = True
+        daDecodedText.Refresh
+        butPlayAudio_Click
+        AutoShow = 5
+      Case 5
+        If Music.State = 0 Then
+          AutoShow = 6
+          Timer.Delay = 5000
+        End If
+      Case 6
+        Timer.Delay = 500
+        butPlayAudio_Click
+        AutoShow = 7
+      Case 7
+        If Music.State = 0 Then
+          AutoShow = 8
+          Timer.Delay = 5000
+        End If
+      Case 8
+        Timer.Delay = 500
+        $ShowData = True
+        daDecodedText.Height = 224
+        daDecodedText.Refresh
+        Select Case FMain.GetModus()
+          Case "Trad.Z."
+            text = "<font size='4' color='darkgreen'>" & s.DecodeSimp2() & "</font><br>"
+            text &= "<font size='2' color='lightgray'>" & Html(s.DecodePin2()) & "</font><br>"
+          Case "Simp.Z."
+            text = "<font size='4' color='darkred'>" & s.DecodeTrad2() & "</font><br>"
+            text &= "<font size='2' color='lightgray'>" & Html(s.DecodePin2()) & "</font><br>"
+          Case Else
+            text = "<font size='4' color='darkred'>" & s.DecodeTrad2() & "</font><br>"
+            text &= "<font size='4' color='darkgreen'>" & s.DecodeSimp2() & "</font><br>"
+        End Select
+        text &= "<font size='3' color='darkblue'>" & Html(s.Translation) & "</font>"
+        text &= "<font size='2' color='darkgray'><br>Vokabeln:<br>" & s.WordHTML & "</font>"
+        lbData.Text = text
+        lbData.Visible = True
+        butPlayAudio_Click
+        AutoShow = 9
+      Case 9
+        If Music.State = 0 Then
+          AutoShow = 10
+          Timer.Delay = 5000
+        End If
+      Case 10
+        Timer.Delay = 500
+        butPlayAudio_Click
+        AutoShow = 11
+      Case 11
+        If Music.State = 0 Then
+          AutoShow = 12
+          Timer.Delay = 10000
+        End If
+      Case 12
+        Timer.Delay = 500
+        $ShowAllDecoded = False
+        daDecodedText.Height = 588
+        daDecodedText.Visible = True
+        lbData.Visible = False
+        FMain.GetFilteredSaetze().NextSatz
+        AutoShow = 0
+    End Select
+  Else If AutoType = "0-1-0" Then
+    Select Case AutoShow
+      Case 0
+        Timer.Delay = 500
+        Me.Title = "Chinesische Sätze - Satz " & CStr(s.Nr) & " - HSK" & s.HSK
+        $ShowAllDecoded = True
+        daDecodedText.Visible = True
+        daDecodedText.Refresh
+        butPlayAudio_Click
+        If Exist(mediadir & s.ImageFile) Then
+          pbImage.Picture = Picture[mediadir & s.ImageFile]
+        Else
+          pbImage.Picture = Picture[Application.Path & "/.hidden/Icon/icon.png"]
+        Endif
+        AutoShow = 1
+      Case 1
+        If Music.State = 0 Then
+          AutoShow = 2
+          Timer.Delay = 5000
+        End If
+      Case 2
+        Timer.Delay = 500
+        $ShowAllDecoded = False
+        daDecodedText.Height = 588
+        daDecodedText.Visible = True
+        lbData.Visible = False
+        FMain.GetFilteredSaetze().NextSatz
+        AutoShow = 0
+    End Select
+  Else If AutoType = "1-1-0" Then
+    Select Case AutoShow
+      Case 0
+        Timer.Delay = 500
+        Me.Title = "Chinesische Sätze - Satz " & CStr(s.Nr) & " - HSK" & s.HSK
+        $ShowAllDecoded = False
+        daDecodedText.Visible = True
+        daDecodedText.Refresh
+        butPlayAudio_Click
+        If Exist(mediadir & s.ImageFile) Then
+          pbImage.Picture = Picture[mediadir & s.ImageFile]
+        Else
+          pbImage.Picture = Picture[Application.Path & "/.hidden/Icon/icon.png"]
+        Endif
+        AutoShow = 1
+      Case 1
+        If Music.State = 0 Then
+          AutoShow = 2
+          Timer.Delay = 5000
+        End If
+      Case 2
+        Timer.Delay = 500
+        $ShowAllDecoded = True
+        daDecodedText.Refresh
+        butPlayAudio_Click
+        AutoShow = 3
+      Case 3
+        If Music.State = 0 Then
+          AutoShow = 4
+          Timer.Delay = 5000
+        End If
+      Case 4
+        Timer.Delay = 500
+        $ShowAllDecoded = False
+        daDecodedText.Height = 588
+        daDecodedText.Visible = True
+        lbData.Visible = False
+        FMain.GetFilteredSaetze().NextSatz
+        AutoShow = 0
+    End Select
+  Endif
+
+End
+
+Private Sub StartTimer()
+
+  butNextAuto.Value = True
+  butEdit.Enabled = False
+  butNext.Enabled = False
+  butPrevious.Enabled = False
+  butPlayAudio.Enabled = False
+  lbData.Visible = False
+  daDecodedText.Visible = False
+  daDecodedText.Height = 588
+  AutoShow = 0
+  Timer.Delay = 200
+  Timer.Enabled = True
+  Music.Stop
+
+End
+
+Private Sub StopTimer()
+
+  butNextAuto.Value = False
+  Timer.Enabled = False
+  butEdit.Enabled = True
+  butNext.Enabled = True
+  butPrevious.Enabled = True
+  butPlayAudio.Enabled = True
+  lbData.Visible = True
+  daDecodedText.Visible = True
+  daDecodedText.Height = 224
+  AutoShow = 0
+  Music.Stop
+  $ShowAllDecoded = True
+  $ShowData = True
+  Form_Open
+
+End

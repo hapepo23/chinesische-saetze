@@ -1,0 +1,203 @@
+' Gambas class file
+
+Private saved As Boolean = False
+
+Public Function DataChanged() As Boolean
+
+  Dim s As Satz = FMain.GetCurrentSatz()
+
+  Return (String.Comp(taTrad.Text, s.DecodeTrad) <> 0) Or (String.Comp(taSimp.Text, s.DecodeSimp) <> 0) Or (String.Comp(taPinyin.Text, s.DecodePin) <> 0) Or (String.Comp(taDecod.Text, s.DecodeTrans) <> 0) Or (String.Comp(taTrans.Text, s.Translation) <> 0) Or (String.Comp(taVok.Text, Utils.ConvertHTMLToText(s.WordHTML)) <> 0)
+
+End
+
+Public Sub butCancel_Click()
+
+  Me.Close
+
+End
+
+Public Sub butSave_Click()
+
+  Dim s As Satz = FMain.GetCurrentSatz()
+  Dim maxind1, maxind2, maxind3, maxind4 As Integer
+  Dim lastchar1, lastchar2, lastchar3, lastchar4 As String
+  Dim test As String[]
+  Dim ok As Boolean = True
+
+  test = Split(taTrad.Text, "|")
+  maxind1 = test.Max
+  lastchar1 = String.Right(taTrad.Text, 1)
+  test = Null
+  test = Split(taSimp.Text, "|")
+  maxind2 = test.Max
+  lastchar2 = String.Right(taSimp.Text, 1)
+  test = Null
+  test = Split(taPinyin.Text, "|")
+  maxind3 = test.Max
+  lastchar3 = String.Right(taPinyin.Text, 1)
+  test = Null
+  test = Split(taDecod.Text, "|")
+  maxind4 = test.Max
+  lastchar4 = String.Right(taDecod.Text, 1)
+  If maxind1 <> maxind2 Or maxind1 <> maxind3 Or maxind1 <> maxind4 Then
+    Utils.ErrorMessage("Anzahl der Trenner | stimmen nicht überein! Nicht gespeichert.")
+    ok = False
+  Endif
+  If lastchar1 <> "|" Or lastchar2 <> "|" Or lastchar3 <> "|" Or lastchar4 <> "|" Then
+    Utils.ErrorMessage("Letztes Zeichen muss immer der Trenner | sein! Nicht gespeichert.")
+    ok = False
+  Endif
+  If ok Then
+    s.Update(taTrad.Text, taSimp.Text, taPinyin.Text, taDecod.Text, taTrans.Text, Utils.ConvertTextToHTML(taVok.Text))
+    saved = True
+    FMain.DataToBeSaved = True
+    FMain.SetAllVocab()
+    If Not FVocab.Closed Then FVocab.tbFilter_Change
+    Me.Close
+  Endif
+
+End
+
+Public Sub butVok_Click()
+
+  Dim s As Satz = FMain.GetCurrentSatz()
+
+  FVocab.Show
+  FVocab.SetFilterText("|" & s.DecodeTrad)
+
+End
+
+Public Sub Form_Close()
+
+  If DataChanged() And (Not saved) Then
+    If Not Utils.YesNoQuestion("Nicht speichern - Bist du sicher?") Then Stop Event
+  Endif
+  Settings.Write(FEdit)
+  FDetails.Show
+  FDetails.Form_Open
+
+End
+
+Public Sub Form_Open()
+
+  Dim s As Satz = FMain.GetCurrentSatz()
+
+  Me.Title = "Chinesische Sätze - Bearbeitung Satz " & CStr(s.Nr)
+  taTrad.Text = s.DecodeTrad
+  taSimp.Text = s.DecodeSimp
+  taPinyin.Text = s.DecodePin
+  taDecod.Text = s.DecodeTrans
+  taTrans.Text = s.Translation
+  taVok.Text = Utils.ConvertHTMLToText(s.WordHTML)
+  butSave.Enabled = DataChanged()
+  Settings.Read(FEdit)
+
+End
+
+Public Sub taDecod_Change()
+
+  butSave.Enabled = DataChanged()
+
+End
+
+Public Sub taDecod_KeyPress()
+
+  If Key.Code = Key["Tab"] Then
+    taTrans.SetFocus
+    Stop Event
+  Endif
+  If Key.Code = Key["v"] And If Key.Control Then
+    Clipboard.Copy(Utils.ConvertUnicodeToChar(Clipboard.Paste("text/plain")), "text/plain")
+  Endif
+
+End
+
+Public Sub taPinyin_Change()
+
+  butSave.Enabled = DataChanged()
+
+End
+
+Public Sub taPinyin_KeyPress()
+
+  If Key.Code = Key["Tab"] Then
+    taDecod.SetFocus
+    Stop Event
+  Endif
+  If Key.Code = Key["v"] And If Key.Control Then
+    Clipboard.Copy(Utils.ConvertUnicodeToChar(Clipboard.Paste("text/plain")), "text/plain")
+  Endif
+
+End
+
+Public Sub taSimp_Change()
+
+  butSave.Enabled = DataChanged()
+
+End
+
+Public Sub taSimp_KeyPress()
+
+  If Key.Code = Key["Tab"] Then
+    taPinyin.SetFocus
+    Stop Event
+  Endif
+  If Key.Code = Key["v"] And If Key.Control Then
+    Clipboard.Copy(Utils.ConvertUnicodeToChar(Clipboard.Paste("text/plain")), "text/plain")
+  Endif
+
+End
+
+Public Sub taTrad_Change()
+
+  butSave.Enabled = DataChanged()
+
+End
+
+Public Sub taTrad_KeyPress()
+
+  If Key.Code = Key["Tab"] Then
+    taSimp.SetFocus
+    Stop Event
+  Endif
+  If Key.Code = Key["v"] And If Key.Control Then
+    Clipboard.Copy(Utils.ConvertUnicodeToChar(Clipboard.Paste("text/plain")), "text/plain")
+  Endif
+
+End
+
+Public Sub taTrans_Change()
+
+  butSave.Enabled = DataChanged()
+
+End
+
+Public Sub taTrans_KeyPress()
+
+  If Key.Code = Key["Tab"] Then
+    taVok.SetFocus
+    Stop Event
+  Endif
+  If Key.Code = Key["v"] And If Key.Control Then
+    Clipboard.Copy(Utils.ConvertUnicodeToChar(Clipboard.Paste("text/plain")), "text/plain")
+  Endif
+
+End
+
+Public Sub taVok_Change()
+
+  butSave.Enabled = DataChanged()
+
+End
+
+Public Sub taVok_KeyPress()
+
+  If Key.Code = Key["Tab"] Then
+    butSave.SetFocus
+    Stop Event
+  Endif
+  If Key.Code = Key["v"] And If Key.Control Then
+    Clipboard.Copy(Utils.ConvertUnicodeToChar(Clipboard.Paste("text/plain")), "text/plain")
+  Endif
+
+End

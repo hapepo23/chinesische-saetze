@@ -1,0 +1,89 @@
+# Gambas Form File 3.0
+
+{ Form Form
+  MoveScaled(0,0,140,88)
+  Icon = Picture["icon.png"]
+  Resizable = False
+  { lbTrad TextLabel
+    MoveScaled(3,2,14,3)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("Trad.Chin.:")
+    Alignment = Align.Right
+  }
+  { taTrad TextArea
+    MoveScaled(18,2,120,10)
+    Font = Font["Noto Mono,+3"]
+    Wrap = True
+  }
+  { lbSimp TextLabel
+    MoveScaled(3,13,14,3)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("Simp.Chin.:")
+    Alignment = Align.Right
+  }
+  { taSimp TextArea
+    MoveScaled(18,13,120,10)
+    Font = Font["Noto Mono,+3"]
+    Wrap = True
+  }
+  { lbPinyin TextLabel
+    MoveScaled(3,24,14,3)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("Pinyin:")
+    Alignment = Align.Right
+  }
+  { taPinyin TextArea
+    MoveScaled(18,24,120,10)
+    Font = Font["Noto Mono,+2"]
+    Wrap = True
+  }
+  { lbDecod TextLabel
+    MoveScaled(1,35,16,3)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("Wort-Übersetz.:")
+    Alignment = Align.Right
+  }
+  { taDecod TextArea
+    MoveScaled(18,35,120,10)
+    Font = Font["Noto Mono,+2"]
+    Wrap = True
+  }
+  { lbTrans TextLabel
+    MoveScaled(1,46,16,3)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("Übersetzung:")
+    Alignment = Align.Right
+  }
+  { taTrans TextArea
+    MoveScaled(18,46,120,10)
+    Font = Font["Noto Mono,+2"]
+    Wrap = True
+  }
+  { lbVok TextLabel
+    MoveScaled(1,57,16,3)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("Vokabeln:")
+    Alignment = Align.Right
+  }
+  { taVok TextArea
+    MoveScaled(18,57,120,24)
+    Font = Font["Noto Mono,+2"]
+    Wrap = True
+  }
+  { butCancel Button
+    MoveScaled(103,82,16,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("Abbruch")
+  }
+  { butSave Button
+    MoveScaled(121,82,17,4)
+    Enabled = False
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("Speichern")
+  }
+  { butVok Button
+    MoveScaled(62,82,16,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("Vokabeln")
+  }
+}

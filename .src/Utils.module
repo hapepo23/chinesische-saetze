@@ -1,0 +1,145 @@
+' Gambas module file
+
+Public Sub AbortMessageAndQuit(text As String)
+
+  Message.Title = "Fataler Fehler"
+  Message.Error(text, "App beenden")
+  Quit
+
+End
+
+Public Function ConvertHTMLToText(text As String) As String
+
+  Dim r As String
+
+  r = text
+  r = Replace(r, "<br>", "\n")
+  r = Replace(r, "&lt;", "<")
+  r = Replace(r, "&gt;", ">")
+  r = Replace(r, "&quot;", "\"")
+  r = Replace(r, "&amp;", "&")
+  Return r
+
+End
+
+Public Function ConvertPinyin(text As String) As String
+
+  Dim r As String
+
+  r = text
+  r = Replace(r, "ā", "a")
+  r = Replace(r, "á", "a")
+  r = Replace(r, "ǎ", "a")
+  r = Replace(r, "à", "a")
+  r = Replace(r, "ē", "e")
+  r = Replace(r, "é", "e")
+  r = Replace(r, "ě", "e")
+  r = Replace(r, "è", "e")
+  r = Replace(r, "ī", "i")
+  r = Replace(r, "í", "i")
+  r = Replace(r, "ǐ", "i")
+  r = Replace(r, "ì", "i")
+  r = Replace(r, "ō", "o")
+  r = Replace(r, "ó", "o")
+  r = Replace(r, "ǒ", "o")
+  r = Replace(r, "ò", "o")
+  r = Replace(r, "ū", "u")
+  r = Replace(r, "ú", "u")
+  r = Replace(r, "ǔ", "u")
+  r = Replace(r, "ù", "u")
+  r = Replace(r, "ǖ", "ü")
+  r = Replace(r, "ǘ", "ü")
+  r = Replace(r, "ǚ", "ü")
+  r = Replace(r, "ǜ", "ü")
+  Return r
+
+End
+
+Public Function ConvertTextForJS(text As String) As String
+
+  Dim r As String
+
+  r = text
+  r = Replace(r, "'", "\\'")
+  Return r
+
+End
+
+Public Function ConvertTextToHTML(text As String) As String
+
+  Dim r As String
+
+  r = text
+  r = Replace(r, "&", "&amp;")
+  r = Replace(r, "\"", "&quot;")
+  r = Replace(r, ">", "&gt;")
+  r = Replace(r, "<", "&lt;")
+  r = Replace(r, "\n", "<br>")
+  Return r
+
+End
+
+Public Function ConvertUnicodeToChar(text As String) As String
+
+  Dim pos As Integer
+  Dim ucode As String
+  Dim uint As Integer
+  Dim r As String
+
+  r = text
+  pos = String.InStr(r, "\\u")
+  While pos > 0
+    ucode = String.Mid(r, pos + 2, 4)
+    uint = Val("&H" & ucode & "&")
+    r = String.Left(r, pos - 1) & String.Chr(uint) & String.Mid(r, pos + 6)
+    pos = String.InStr(r, "\\u")
+  Wend
+  Return r
+
+End
+
+Public Sub ErrorMessage(text As String)
+
+  Message.Title = "Fehler"
+  Message.Error(text, "OK")
+
+End
+
+Public Function GetStatusText(stat As Integer) As String
+
+  Select Case stat
+    Case -1
+      Return "✘"
+    Case 0
+      Return "➔"
+    Case Else
+      Return "✔"
+  End Select
+
+End
+
+Public Sub InfoMessage(text As String)
+
+  Message.Title = "Information"
+  Message.Info(text, "OK")
+
+End
+
+Public Function IsChinese(text As String) As Boolean
+
+  ' 4E00 bis 9FFF = Chin. Zeichen
+  Dim c As Integer = String.Code(text, 1)
+
+  If c >= 19968 And c <= 40959 Then
+    Return True
+  Else
+    Return False
+  Endif
+
+End
+
+Public Function YesNoQuestion(text As String) As Boolean
+
+  Return Message.Question(text, "Ja", "Nein") = 1
+
+End

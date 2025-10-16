@@ -1,0 +1,100 @@
+# Gambas Form File 3.0
+
+{ Form Form
+  MoveScaled(0,0,152,88)
+  Text = ("Chinesische Sätze")
+  Icon = Picture["icon.png"]
+  Persistent = True
+  { tbFilter TextBox
+    MoveScaled(8,2,19,4)
+    Font = Font["Noto Sans CJK TC"]
+  }
+  { butClearFilter Button
+    MoveScaled(28,2,4,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("❌")
+  }
+  { cbStatus ComboBox
+    MoveScaled(41,2,9,4)
+    Font = Font["Noto Sans CJK TC"]
+    ReadOnly = True
+  }
+  { cbSort ComboBox
+    MoveScaled(57,2,13,4)
+    Font = Font["Noto Sans CJK TC"]
+    ReadOnly = True
+    List = [("Nr."), ("Zufällig"), ("HSK, Nr.")]
+    Text = ("Zufällig")
+  }
+  { cbModus ComboBox
+    MoveScaled(79,2,13,4)
+    Font = Font["Noto Sans CJK TC"]
+    ReadOnly = True
+    List = [("Trad.Z."), ("Simp.Z."), ("Pinyin")]
+    Text = ("Trad.Z.")
+  }
+  { butSetSel2 Button
+    MoveScaled(101,2,3,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("➔")
+  }
+  { butSetSel1 Button
+    MoveScaled(105,2,3,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("✘")
+  }
+  { butSetSel3 Button
+    MoveScaled(109,2,3,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("✔")
+  }
+  { butNeuSatz Button
+    MoveScaled(121,2,16,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("Neuer Satz")
+  }
+  { butVok Button
+    MoveScaled(139,2,11,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("Vokabeln")
+  }
+  { gvTable GridView
+    MoveScaled(2,8,148,78)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Mode = Select.Multiple
+    Header = GridView.Horizontal
+  }
+  { lbStatus TextLabel
+    MoveScaled(33,2,8,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("Status:")
+    Alignment = Align.Right
+  }
+  { lbFilter TextLabel
+    MoveScaled(2,2,6,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("Filter:")
+    Alignment = Align.Right
+  }
+  { lbSort TextLabel
+    MoveScaled(51,2,6,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    NoTabFocus = True
+    Text = ("Sort.:")
+    Alignment = Align.Right
+  }
+  { lbModus TextLabel
+    MoveScaled(71,2,8,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    NoTabFocus = True
+    Text = ("Modus:")
+    Alignment = Align.Right
+  }
+  { lbSetSel TextLabel
+    MoveScaled(93,2,8,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    NoTabFocus = True
+    Text = ("SetSel:")
+    Alignment = Align.Right
+  }
+}

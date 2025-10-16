@@ -1,0 +1,44 @@
+# Gambas Form File 3.0
+
+{ Form Form
+  MoveScaled(0,0,57,67)
+  Text = ("Chinesische Vokabeln")
+  Icon = Picture["icon.png"]
+  Resizable = False
+  { tbFilter TextBox
+    MoveScaled(7,1,19,4)
+    Font = Font["Noto Sans CJK TC"]
+  }
+  { butClearFilter Button
+    MoveScaled(27,1,4,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("❌")
+  }
+  { cbSort ComboBox
+    MoveScaled(38,1,18,4)
+    Font = Font["Noto Sans CJK TC"]
+    ReadOnly = True
+    List = [("Trad.Z."), ("Simp.Z."), ("Pinyin"), ("Anzahl"), ("HSK"), ("Übersetzung")]
+    Text = ("Zufällig")
+  }
+  { lbFilter TextLabel
+    MoveScaled(1,1,6,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("Filter:")
+    Alignment = Align.Normal
+  }
+  { lbSort TextLabel
+    MoveScaled(31,1,7,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    NoTabFocus = True
+    Text = ("Sort.:")
+    Alignment = Align.Right
+    Wrap = False
+  }
+  { gvTable GridView
+    MoveScaled(1,6,55,60)
+    Font = Font["Noto Sans CJK TC,-1"]
+    Mode = Select.Single
+    Header = GridView.Horizontal
+  }
+}

@@ -1,0 +1,111 @@
+' Gambas class file
+
+Public Sub SetFilterText(text As String)
+
+  tbFilter.Text = text
+
+End
+
+Public Sub butClearFilter_Click()
+
+  tbFilter.Text = ""
+  tbFilter.SetFocus
+
+End
+
+Public Sub cbSort_Click()
+
+  tbFilter_Change
+
+End
+
+Public Sub Form_Close()
+
+  Settings["FVocab/tbFilter"] = tbFilter.text
+  Settings["FVocab/cbSort"] = cbSort.Text
+  'Settings["FVocab/gvTable"] = gvTable.Row
+  Settings.Write(FVocab)
+
+End
+
+Public Sub Form_Open()
+
+  Dim anz As Integer
+
+  'gvTable.Row = Settings["FVocab/gvTable", 0]
+  tbFilter.Text = Settings["FVocab/tbFilter", ""]
+  cbSort.Text = Settings["FVocab/cbSort", "Anzahl"]
+  anz = FMain.SetFilteredVocab(tbFilter.Text, cbSort.Text)
+  gvTable.Columns.Count = 6
+  gvTable.Rows.Count = anz
+  gvTable.Columns[0].Width = 40
+  gvTable.Columns[1].Width = 40
+  gvTable.Columns[2].Width = 85
+  gvTable.Columns[3].Width = 25
+  gvTable.Columns[4].Width = 20
+  gvTable.Columns[0].Title = "Trad.Z."
+  gvTable.Columns[1].Title = "Simp.Z."
+  gvTable.Columns[2].Title = "Pinyin"
+  gvTable.Columns[5].Title = "Übersetzung"
+  gvTable.Columns[3].Title = "Anz."
+  gvTable.Columns[4].Title = "HSK"
+  gvTable.Columns[3].Alignment = Align.Center
+  gvTable.Columns[4].Alignment = Align.Center
+  'gvTable.Row = Settings["FVocab/gvTable", 0]
+  Settings.Read(FVocab)
+
+End
+
+Public Sub gvTable_Activate()
+
+  If FMain.IsHidden Then Return
+  Dim v As Vocabs = FMain.GetFilteredVocab()
+  v.CurrentVocabNr = gvTable.Row + 1
+  Dim vc As Vocab = v.GetCurrentVocab()
+  FMain.SetFilterText("|" & vc.Trad & "|" & vc.Trans & "|")
+  FMain.SetStatusAll()
+
+End
+
+Public Sub gvTable_Data(Row As Integer, Column As Integer)
+
+  Dim v As Vocab = FMain.GetFilteredVocab().GetVocab(Row + 1)
+
+  If v = Null Then
+    gvTable.Data.Text = ""
+  Else
+    If Column = 0 Then
+      gvTable.Data.Text = v.Trad
+    Else If Column = 1 Then
+      gvTable.Data.Text = v.Simp
+    Else If Column = 2 Then
+      gvTable.Data.Text = v.Pin
+    Else If Column = 5 Then
+      gvTable.Data.Text = v.Trans
+    Else If Column = 3 Then
+      gvTable.Data.Text = CStr(v.Anz)
+    Else
+      gvTable.Data.Text = CStr(v.HSK)
+    Endif
+  Endif
+
+End
+
+Public Sub tbFilter_Change()
+
+  Dim anz As Integer
+
+  anz = FMain.SetFilteredVocab(tbFilter.Text, cbSort.Text)
+  gvTable.Rows.Count = anz
+  gvTable.Refresh
+  gvTable.Row = 0
+
+End
+
+Public Sub tbFilter_KeyPress()
+
+  If Key.Code = Key["v"] And If Key.Control Then
+    Clipboard.Copy(Utils.ConvertUnicodeToChar(Clipboard.Paste("text/plain")), "text/plain")
+  Endif
+
+End

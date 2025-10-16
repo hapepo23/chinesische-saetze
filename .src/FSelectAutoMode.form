@@ -1,0 +1,14 @@
+# Gambas Form File 3.0
+
+{ Form Form
+  MoveScaled(0,0,29,15)
+  Text = ("Auto-Modus?")
+  Resizable = False
+  Arrangement = Arrange.Vertical
+  Spacing = True
+  Margin = True
+  { lbAutoModes ListBox
+    MoveScaled(1,1,27,13)
+    List = [("(Abbruch)"), ("0-1-0"), ("1-1-0"), ("2-2-2")]
+  }
+}

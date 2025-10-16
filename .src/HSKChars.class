@@ -1,0 +1,73 @@
+' Gambas class file
+
+Private hskdata As New Collection
+Private keys As New String[]
+Private usage As New Collection
+Private zerousage As New Collection
+
+Public Sub ExportUnused(filename As String)
+
+  Dim anz As Integer
+  Dim f As Stream
+  Dim c As String
+
+  usage = zerousage.Copy()
+  anz = FMain.SetAllVocab()
+  f = Open filename For Output Create
+  For Each c In keys
+    If usage[c] = 0 Then Print #f, c & "|" & hskdata[c]
+  Next
+  Close #f
+
+End
+
+Public Sub Import(filename As String)
+
+  Dim f As Stream
+  Dim zeile As String
+  Dim items As String[]
+
+  If Not Exist(filename) Then
+    Utils.AbortMessageAndQuit("Keine HSK-Datei '" & filename & "'!")
+  Endif
+  f = Open filename For Input
+  hskdata.Clear
+  usage.Clear
+  zerousage.Clear
+  keys.Clear
+  While Not Eof(f)
+    Line Input #f, zeile
+    items = Split(zeile, "|")
+    If items.Count >= 2 Then
+      keys.Add(items[0])
+      hskdata.Add(items[1], items[0])
+      zerousage.Add(0, items[0])
+    Endif
+  Wend
+  Close #f
+
+End
+
+Public Function SearchFor(trad As String) As Integer
+
+  Dim l As Integer, i As Integer, v As Integer
+  Dim c As String
+  Dim result As Integer
+
+  l = String.Len(trad)
+  result = 0
+  For i = 1 To l
+    c = String.Mid(trad, i, 1)
+    If Utils.IsChinese(c) Then
+      If hskdata.Exist(c) Then
+        v = CInt(hskdata[c])
+        usage[c] = 1
+      Else
+        v = 5
+      Endif
+      If v > result Then result = v
+    Endif
+  Next
+  Return result
+
+End

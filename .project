@@ -1,0 +1,24 @@
+# Gambas Project File 3.0
+Title=Chinesische Sätze
+Startup=FMain
+Icon=icon.png
+Version=2.0.58
+Component=gb.image
+Component=gb.qt5
+Component=gb.form
+Component=gb.compress
+Component=gb.compress.zlib
+Component=gb.settings
+Component=gb.qt5.ext
+Component=gb.sdl2.audio
+TabSize=2
+Language=de
+KeepDebugInfo=0
+License=General Public License
+Packager=1
+Systems=ubuntu
+Menus=ubuntu:"Applications/Education"
+Categories=ubuntu:"Education"
+Groups=ubuntu:"education"
+Tags=Education
+GambasVersion=3.14

@@ -1,0 +1,320 @@
+' Gambas class file
+
+Property DataToBeSaved As Boolean Use $DataToBeSaved
+Property Read IsHidden As Boolean Use $IsHidden
+
+Private allsaetze As Saetze
+Private allvoc As Vocabs
+Private hskdata As HSKChars
+Private saetze As Saetze
+Private voc As Vocabs
+
+Public Function GetAllSaetze() As Saetze
+
+  Return allsaetze
+
+End
+
+Public Function GetAllVocab() As Vocabs
+
+  Return allvoc
+
+End
+
+Public Function GetCurrentSatz() As Satz
+
+  Return saetze.GetCurrentSatz()
+
+End
+
+Public Function GetFilteredSaetze() As Saetze
+
+  Return saetze
+
+End
+
+Public Function GetFilteredVocab() As Vocabs
+
+  Return voc
+
+End
+
+Public Function GetHSKData() As HSKChars
+
+  Return hskdata
+
+End
+
+Public Function GetModus() As String
+
+  Return cbModus.Current.Text
+
+End
+
+Public Sub Reshow()
+
+  $IsHidden = False
+  gvTable.Row = saetze.CurrentSatzNr - 1
+  tbFilter.SetFocus
+  tbFilter.SelectAll
+  Settings.Read(FMain)
+
+End
+
+Public Function SetAllVocab() As Integer
+
+  allvoc = Null
+  allvoc = New Vocabs
+  Return allvoc.LoadFromSaetze(allsaetze)
+
+End
+
+Public Function SetFilteredSaetze(filtertext As String, sortmodus As String, statusmodus As String) As Integer
+
+  saetze = Null
+  saetze = New Saetze
+  Return saetze.FilterSaetze(allsaetze, filtertext, sortmodus, statusmodus)
+
+End
+
+Public Function SetFilteredVocab(filtertext As String, sortmodus As String) As Integer
+
+  voc = Null
+  voc = New Vocabs
+  Return voc.GetFilteredVocab(allvoc, filtertext, sortmodus)
+
+End
+
+Public Sub SetFilterText(text As String)
+
+  tbFilter.Text = text
+
+End
+
+Public Sub SetStatusAll()
+
+  cbStatus.Text = "Alle"
+  tbFilter_Change
+
+End
+
+Public Sub butClearFilter_Click()
+
+  tbFilter.Text = ""
+  tbFilter.SetFocus
+
+End
+
+Public Sub butNeuSatz_Click()
+
+  Dim newtradsatz As String
+
+  newtradsatz = InputBox("Bitte einen Satz in trad. Chinesisch:", "Neuer Satz " & CStr(allsaetze.SaetzeCount() + 1), "")
+  If newtradsatz = Null Then
+    Utils.InfoMessage("Abgebrochen.")
+    Return
+  Endif
+  newtradsatz = Trim(newtradsatz)
+  If String.Len(newtradsatz) < 2 Then
+    Utils.InfoMessage("Zu kurz, abgebrochen.")
+    Return
+  Endif
+  allsaetze.NewSatz(newtradsatz, allvoc)
+  tbFilter.Text = newtradsatz
+  tbFilter_Change
+  saetze.CurrentSatzNr = 1
+  gvTable.Row = saetze.CurrentSatzNr - 1
+  gvTable.Refresh
+  $DataToBeSaved = True
+
+End
+
+Public Sub butSetSel1_Click()
+
+  SetSelClick(-1)
+
+End
+
+Public Sub butSetSel2_Click()
+
+  SetSelClick(0)
+
+End
+
+Public Sub butSetSel3_Click()
+
+  SetSelClick(1)
+
+End
+
+Public Sub butVok_Click()
+
+  FVocab.Show
+
+End
+
+Public Sub cbModus_Click()
+
+  If gvTable.Columns.Count = 4 Then gvTable.Columns[3].Title = "Chinesisch (" & cbModus.Current.Text & ")"
+  gvTable.Refresh
+
+End
+
+Public Sub cbSort_Click()
+
+  tbFilter_Change
+
+End
+
+Public Sub cbStatus_Click()
+
+  tbFilter_Change
+
+End
+
+Public Sub Form_Close()
+
+  If $DataToBeSaved Then
+    Dim Cp As New Compress
+    Cp.Type = "zlib"
+    Cp.File(Application.Path & "/.hidden/Data/Data", Application.Path & "/.hidden/Backup/Data." & Format$(Now, "yyyy-mm-dd-hh-nn-ss") & ".gz", Cp.Max)
+    allsaetze.Export(Application.Path & "/.hidden/Data/Data")
+    allsaetze.Export2(Application.Path & "/.hidden/Data/Export")
+    allsaetze.Export3(Application.Path & "/.hidden/Data/JSExport")
+    allsaetze.Export4(Application.Path & "/.hidden/Data/Export2")
+    allsaetze.Export5(Application.Path & "/.hidden/Data/Export3")
+    Utils.InfoMessage("Änderungen in Data- und Export-Datei gespeichert.")
+  Else
+    Utils.InfoMessage("Keine Änderungen; Daten & Exporte unverändert.")
+  Endif
+  allsaetze.ExportStatus(Application.Path & "/.hidden/Data/Status")
+  allvoc.Export(Application.Path & "/.hidden/Data/Vocab")
+  hskdata.ExportUnused(Application.Path & "/.hidden/Data/CharNotUsed")
+  Settings["FMain/cbSort"] = cbSort.Current.Text
+  Settings["FMain/cbStatus"] = cbStatus.Current.Text
+  Settings["FMain/cbModus"] = cbModus.Current.Text
+  Settings["FMain/tbFilter"] = tbFilter.text
+  'Settings["FMain/gvTable"] = gvTable.Row
+  Settings.Write(FMain)
+  If Not FVocab.Closed Then FVocab.Close
+  Quit
+
+End
+
+Public Sub Form_Open()
+
+  Dim anz As Integer
+
+  $IsHidden = False
+  hskdata = New HSKChars
+  hskdata.Import(Application.Path & "/.hidden/Data/HSK")
+  allsaetze = New Saetze
+  anz = allsaetze.Import(Application.Path & "/.hidden/Data/Data", Application.Path & "/.hidden/Data/Status")
+  If anz = 0 Then
+    Utils.AbortMessageAndQuit("Keine Sätze in Data-Datei!")
+  Endif
+  anz = SetAllVocab()
+  $DataToBeSaved = False
+  cbStatus.List = ["Alle", "➔", "✘", "✔"]
+  cbStatus.Text = Settings["FMain/cbStatus", "Alle"]
+  cbSort.Text = Settings["FMain/cbSort", "Nr."]
+  cbModus.Text = Settings["FMain/cbModus", "Trad.Z."]
+  anz = SetFilteredSaetze(tbFilter.Text, cbSort.Current.Text, cbStatus.Current.Text)
+  gvTable.Columns.Count = 4
+  gvTable.Rows.Count = anz
+  gvTable.Columns[0].Width = 70
+  gvTable.Columns[1].Width = 45
+  gvTable.Columns[2].Width = 400
+  gvTable.Columns[0].Title = "Nr."
+  gvTable.Columns[1].Title = "HSK"
+  gvTable.Columns[2].Title = "Übersetzung"
+  gvTable.Columns[3].Title = "Chinesisch (" & cbModus.Current.Text & ")"
+  gvTable.Columns[1].Alignment = Align.Center
+  Settings.Read(FMain)
+  tbFilter.Text = Settings["FMain/tbFilter", ""]
+  'gvTable.Row = Settings["FMain/gvTable", 0]
+
+End
+
+Public Sub Form_Resize()
+
+  'If FMain.Width < 1100 Then FMain.Width = 1100
+  gvTable.Width = FMain.Width - 32
+  gvTable.Height = FMain.Height - 80
+  gvTable.Columns[2].Width = CInt(FMain.Width * 0.45)
+  butVok.X = FMain.Width - 104
+  butNeuSatz.X = FMain.Width - 248
+  'Print "resize", FMain.Width, FMain.Height
+
+End
+
+Public Sub gvTable_Activate()
+
+  Sleep 0.1
+  saetze.CurrentSatzNr = gvTable.Row + 1
+  Settings.Write(FMain)
+  Me.Hide
+  $IsHidden = True
+  FDetails.ShowAllDecoded = True
+  FDetails.ShowData = True
+  FDetails.Reshow
+
+End
+
+Public Sub gvTable_Data(Row As Integer, Column As Integer)
+
+  Dim s As Satz = saetze.GetSatz(Row + 1)
+
+  If s = Null Then
+    gvTable.Data.Text = ""
+  Else
+    If Column = 0 Then
+      gvTable.Data.Text = Utils.GetStatusText(s.Status) & " " & CStr(s.Nr)
+    Else If Column = 1 Then
+      gvTable.Data.Text = CStr(s.HSK)
+    Else If Column = 2 Then
+      gvTable.Data.Text = s.Translation
+    Else If Column = 3 Then
+      Select Case cbModus.Current.Text
+        Case "Trad.Z."
+          gvTable.Data.Text = s.DecodeTrad2()
+        Case "Simp.Z."
+          gvTable.Data.Text = s.DecodeSimp2()
+        Case Else
+          gvTable.Data.Text = s.DecodePin2()
+      End Select
+    Endif
+  Endif
+
+End
+
+Public Sub tbFilter_Change()
+
+  Dim anz As Integer
+
+  anz = SetFilteredSaetze(tbFilter.text, cbSort.Current.Text, cbStatus.Current.Text)
+  gvTable.Rows.Count = anz
+  gvTable.Refresh
+  gvTable.Row = saetze.CurrentSatzNr - 1
+
+End
+
+Public Sub tbFilter_KeyPress()
+
+  If Key.Code = Key["v"] And If Key.Control Then
+    Clipboard.Copy(Utils.ConvertUnicodeToChar(Clipboard.Paste("text/plain")), "text/plain")
+  Endif
+
+End
+
+Private Sub SetSelClick(statuscode As Integer)
+
+  Dim index As Integer
+
+  If gvTable.Rows.Selection.Count = 0 Then Return
+  For Each index In gvTable.Rows.Selection
+    saetze.GetSatz(index + 1).Status = statuscode
+  Next
+  gvTable.Refresh
+
+End

@@ -1,0 +1,72 @@
+# Gambas Form File 3.0
+
+{ Form Form
+  MoveScaled(0,0,154,88)
+  Icon = Picture["icon.png"]
+  Persistent = True
+  Resizable = False
+  { butEdit Button
+    MoveScaled(117,2,35,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("Daten bearbeiten")
+  }
+  { butPlayAudio Button
+    MoveScaled(117,72,35,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("Audio abspielen   ▶ ")
+  }
+  { butPrevious Button
+    MoveScaled(117,77,10,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("<<")
+  }
+  { butNext Button
+    MoveScaled(142,77,10,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = (">>")
+  }
+  { butVok Button
+    MoveScaled(117,82,10,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("Vok.")
+  }
+  { butExit Button
+    MoveScaled(129,82,23,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Text = ("Schließen")
+  }
+  { lbData TextLabel
+    MoveScaled(2,36,113,50)
+    Font = Font["Noto Sans CJK TC,16"]
+    Background = Color.White
+    NoTabFocus = True
+    Alignment = Align.Center
+  }
+  { lbStatus Label
+    MoveScaled(118,12,34,8)
+    Font = Font["Noto Sans CJK TC,Bold,+10"]
+    Alignment = Align.Center
+  }
+  { pbImage PictureBox
+    MoveScaled(117,29,35,35)
+    Font = Font["Noto Sans CJK TC"]
+    NoTabFocus = True
+    Alignment = Align.Center
+    Mode = PictureBox.Contain
+  }
+  { daDecodedText DrawingArea
+    MoveScaled(2,2,113,32)
+    Background = &HFFFFDF&
+    NoTabFocus = True
+  }
+  { Timer #Timer
+    #MoveScaled(94,79)
+    Delay = 500
+  }
+  { butNextAuto CheckBox
+    MoveScaled(129,77,12,4)
+    Font = Font["Noto Sans CJK TC,+1"]
+    Foreground = Color.Black
+    Text = ("Auto >>")
+  }
+}

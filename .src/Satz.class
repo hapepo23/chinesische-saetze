@@ -1,0 +1,147 @@
+' Gambas class file
+
+Property Read DecodePin As String Use $DecodePin
+Property Read DecodeSimp As String Use $DecodeSimp
+Property Read DecodeText As String Use $DecodeText
+Property Read DecodeTrad As String Use $DecodeTrad
+Property Read DecodeTrans As String Use $DecodeTrans
+Property Read HSK As Integer Use $Hsk
+Property Read ImageFile As String Use $ImageFile
+Property Read Nr As Integer Use $Nr
+Property Read SoundFile As String Use $SoundFile
+Property Status As Integer Use $Status
+Property Read Translation As String Use $Translation
+Property Read WordHTML As String Use $WordHTML
+
+Static Private Sortmodus As String
+
+Static Public Sub SetSortModus(Value As String)
+
+  Sortmodus = Value
+
+End
+
+Public Function DecodePin2() As String
+
+  Return Replace(Replace(Replace(Replace(Replace($DecodePin, "|", " "), " , ", ", "), " . ", ". "), " ! ", "! "), " ? ", "? ")
+
+End
+
+Public Function DecodeSimp2() As String
+
+  Return Replace($DecodeSimp, "|", "")
+
+End
+
+Public Function DecodeTrad2() As String
+
+  Return Replace($DecodeTrad, "|", "")
+
+End
+
+Public Function DecodeTrans2() As String
+
+  Return Replace(Replace(Replace(Replace(Replace($DecodeTrans, "|", " "), " , ", ", "), " . ", ". "), " ! ", "! "), " ? ", "? ")
+
+End
+
+Public Sub FillSatz(DataArray As String[])
+
+  If DataArray.Count < 7 Then
+    Utils.AbortMessageAndQuit("Zu wenig Satz-Daten: " & CStr(DataArray.Count) & ", mindestens 7!")
+  Endif
+  Dim firstdata As String[] = Split(DataArray[0], "|")
+  If firstdata.Count = 1 Then firstdata.Add("-1")
+  $Nr = CInt(firstdata[0])
+  $Status = CInt(firstdata[1])
+  $DecodeText = DataArray[1] & "\n" & DataArray[2] & "\n" & DataArray[3] & "\n" & DataArray[4]
+  $DecodeTrad = DataArray[1]
+  $DecodeSimp = DataArray[2]
+  $DecodePin = DataArray[3]
+  $DecodeTrans = DataArray[4]
+  $Translation = DataArray[5]
+  $ImageFile = String.Right("0000" & CStr($Nr), 4) & ".jpg"
+  $SoundFile = String.Right("0000" & CStr($Nr), 4) & ".mp3"
+  $WordHTML = DataArray[6]
+  $Hsk = FMain.GetHSKData().SearchFor(DecodeTrad2())
+
+End
+
+Public Sub MakeNewSatz(nr As Integer, tradsatz As String, vocabulary As Vocabs)
+
+  Dim rest, s As String
+  Dim maxlen, restlen, i As Integer
+  Dim v As String[]
+  Dim ok As Boolean
+  Dim tmp As String[] = ["", "", "", ""]
+  Dim Result As String
+
+  $DecodeText = ""
+  maxlen = vocabulary.MaxLen()
+  rest = tradsatz
+  restlen = String.Len(rest)
+  Do While restlen > 0
+    ok = False
+    For i = Min(restlen, maxlen) To 1 Step -1
+      s = String.Left(rest, i)
+      v = vocabulary.SearchFor(s)
+      If v = Null Then
+        Continue
+      Else
+        tmp[0] &= s & "|"
+        tmp[1] &= v[0] & "|"
+        tmp[2] &= v[1] & "|"
+        tmp[3] &= v[2] & "|"
+        rest = String.Mid(rest, i + 1)
+        restlen = String.Len(rest)
+        ok = True
+        Break
+      End If
+    Next
+    If Not ok Then
+      tmp[0] &= s & "|"
+      tmp[1] &= "?|"
+      tmp[2] &= "?|"
+      tmp[3] &= "?|"
+      rest = String.Mid(rest, 2)
+      restlen = String.Len(rest)
+    Endif
+  Loop
+  $Nr = nr
+  $DecodeText = tmp.Join("\n")
+  $DecodeTrad = tmp[0]
+  $DecodeSimp = tmp[1]
+  $DecodePin = tmp[2]
+  $DecodeTrans = tmp[3]
+  Shell "trans -b zh-TW:de \"" & tradsatz & "\"" Wait To Result
+  $Translation = Trim(Result)
+  $ImageFile = String.Right("0000" & CStr(nr), 4) & ".jpg"
+  $SoundFile = String.Right("0000" & CStr(nr), 4) & ".mp3"
+  $WordHTML = "?"
+  $Hsk = FMain.GetHSKData().SearchFor(DecodeTrad2())
+  $Status = -1
+
+End
+
+Public Sub Update(trad As String, simp As String, pin As String, decod As String, trans As String, voc As String)
+
+  $DecodeText = trad & "\n" & simp & "\n" & pin & "\n" & decod
+  $DecodeTrad = trad
+  $DecodeSimp = simp
+  $DecodePin = pin
+  $DecodeTrans = decod
+  $Translation = trans
+  $WordHTML = voc
+  $Hsk = FMain.GetHSKData().SearchFor(DecodeTrad2())
+
+End
+
+Public Function _compare(Other As Satz) As Integer
+
+  Dim r As Integer
+
+  r = Sgn(Me.HSK - Other.HSK)
+  If r = 0 Then r = Sgn(Me.Nr - Other.Nr)
+  Return r
+
+End

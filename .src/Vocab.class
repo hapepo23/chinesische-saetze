@@ -1,0 +1,57 @@
+' Gambas class file
+
+Property Read Anz As Integer Use $Anz
+Property Read HSK As Integer Use $Hsk
+Property Read Pin As String Use $Pin
+Property Read Simp As String Use $Simp
+Property Read Trad As String Use $Trad
+Property Read Trans As String Use $Trans
+
+Static Private Sortmodus As String
+
+Static Public Sub SetSortModus(Value As String)
+
+  Sortmodus = Value
+
+End
+
+Public Sub FillVocab(DataArray As String[])
+
+  If DataArray.Count < 5 Then
+    Utils.AbortMessageAndQuit("Zu wenig Vocab-Daten: " & CStr(DataArray.Count) & ", mindestens 5!")
+  Endif
+  $Trad = Trim(DataArray[0])
+  $Simp = Trim(DataArray[1])
+  $Pin = Trim(DataArray[2])
+  $Trans = Trim(DataArray[3])
+  $Anz = CInt(DataArray[4])
+  $Hsk = FMain.GetHSKData().SearchFor($Trad)
+
+End
+
+Public Function _compare(Other As Vocab) As Integer
+
+  Dim r As Integer
+
+  If Sortmodus = "Anzahl" Then
+    r = -Sgn(Me.Anz - Other.Anz)
+    If r = 0 Then r = String.Comp(Utils.ConvertPinyin(Me.Pin), Utils.ConvertPinyin(Other.Pin))
+  Else If Sortmodus = "Trad.Z." Then
+    r = String.Comp(Me.Trad, Other.Trad)
+    If r = 0 Then r = -Sgn(Me.Anz - Other.Anz)
+  Else If Sortmodus = "Simp.Z." Then
+    r = String.Comp(Me.Simp, Other.Simp)
+    If r = 0 Then r = -Sgn(Me.Anz - Other.Anz)
+  Else If Sortmodus = "Pinyin" Then
+    r = String.Comp(Utils.ConvertPinyin(Me.Pin), Utils.ConvertPinyin(Other.Pin))
+    If r = 0 Then r = -Sgn(Me.Anz - Other.Anz)
+  Else If Sortmodus = "HSK" Then
+    r = Sgn(Me.HSK - Other.HSK)
+    If r = 0 Then r = String.Comp(Utils.ConvertPinyin(Me.Pin), Utils.ConvertPinyin(Other.Pin))
+  Else
+    r = String.Comp(Me.Trans, Other.Trans, gb.Natural + gb.IgnoreCase)
+    If r = 0 Then r = -Sgn(Me.Anz - Other.Anz)
+  Endif
+  Return r
+
+End

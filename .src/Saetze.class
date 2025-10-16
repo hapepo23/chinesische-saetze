@@ -1,0 +1,332 @@
+' Gambas class file
+
+Property CurrentSatzNr As Integer Use $CurrentSatzNr
+
+Private $SatzArray As New Satz[]
+
+Public Sub Export(filename As String)
+
+  Dim s As Satz
+  Dim f As Stream
+
+  f = Open filename For Output Create
+  For Each s In $SatzArray
+    Print #f, s.Nr
+    Print #f, s.DecodeText
+    Print #f, s.Translation
+    Print #f, s.WordHTML
+    Print #f, "###"
+  Next
+  Close #f
+
+End
+
+Public Sub Export2(filename As String)
+
+  Dim s As Satz
+  Dim f As Stream
+
+  f = Open filename For Output Create
+  For Each s In $SatzArray
+    Print #f, Right("000" & CStr(s.Nr), 4); gb.Tab; s.DecodeTrad2(); gb.Tab; s.DecodeSimp2(); gb.Tab; s.DecodePin2(); gb.Tab; Utils.ConvertTextToHTML(s.Translation); gb.Tab; "[sound:" & Right("000" & CStr(s.Nr), 4) & ".mp3]"; gb.Tab; "<img src=\"" & Right("000" & CStr(s.Nr), 4) & ".jpg\">"
+  Next
+  Close #f
+
+End
+
+Public Sub Export3(filename As String)
+
+  Dim s As Satz
+  Dim f As Stream
+  Dim first As Boolean = True
+
+  f = Open filename For Output Create
+  Print #f, "var sentences = ["
+  Print #f, ""
+  For Each s In $SatzArray
+    Print #f, IIf(first, "", ","); "{'chinese':'"; Utils.ConvertTextForJS(s.DecodeTrad2()); "', 'chinesesimp':'"; Utils.ConvertTextForJS(s.DecodeSimp2()); "', 'pinyin':'"; Utils.ConvertTextForJS(s.DecodePin2()); "', 'german':'"; Utils.ConvertTextForJS(s.Translation); "', 'audio':'"; Right("000" & CStr(s.Nr), 4) & ".mp3"; "', 'image':'"; Right("000" & CStr(s.Nr), 4) & ".jpg"; "'}"
+    If first Then first = False
+  Next
+  Print #f, ""
+  Print #f, "];"
+  Print #f, ""
+  Close #f
+
+End
+
+Public Sub Export4(filename As String)
+
+  Dim s As Satz
+  Dim f As Stream
+  Dim wrds As String[]
+  Dim wrds2 As String[]
+  Dim wrd As String
+  Dim wrdtrans As String
+
+  f = Open filename For Output Create
+  For Each s In $SatzArray
+    wrds = Split(Replace(s.WordHTML, "<br>", "~") & "~", "~")
+    wrds2 = Split(Replace(Replace(wrds[0], " - ", "~"), " = ", "~") & "~", "~")
+    wrd = Trim(String.Left(wrds2[0], String.InStr(wrds2[0] & " ", " ") - 1))
+    If wrds2.Count >= 3 Then
+      wrdtrans = Trim(wrds2[2])
+      Print #f, Right("000" & CStr(s.Nr), 4); gb.Tab; Replace(s.DecodeTrad2(), wrd, "{{c1::" & wrd & ":: " & wrdtrans & " }}"); gb.Tab; s.DecodeTrad2(); gb.Tab; s.DecodeSimp2(); gb.Tab; s.DecodePin2(); gb.Tab; Utils.ConvertTextToHTML(s.Translation); gb.Tab; "[sound:" & Right("000" & CStr(s.Nr), 4) & ".mp3]"; gb.Tab; "<img src=\"" & Right("000" & CStr(s.Nr), 4) & ".jpg\">"
+    Endif
+  Next
+  Close #f
+
+End
+
+Public Sub Export5(filename As String)
+
+  Dim s As Satz
+  Dim f As Stream
+  Dim wrds As String[]
+  Dim wrds2 As String[]
+  Dim wrd As String
+  Dim wrdtrans As String
+  Dim wrdpin As String
+  Dim i, j As Integer
+
+  f = Open filename For Output Create
+  Print #f, "#separator:tab"
+  Print #f, "#html:true"
+  For Each s In $SatzArray
+    wrds = Split(Replace(s.WordHTML, "<br>", "~") & "~", "~")
+    j = 0
+    For i = 0 To (wrds.Count - 1)
+      wrds2 = Split(Replace(Replace(wrds[i], " - ", "~"), " = ", "~") & "~", "~")
+      wrd = Trim(String.Left(wrds2[0], String.InStr(wrds2[0] & " ", " ") - 1))
+      If wrds2.Count >= 3 Then
+        wrdtrans = Trim(wrds2[2])
+        wrdpin = Trim(wrds2[1])
+        j = j + 1
+        If j < 10 Then
+          Print #f, Right("000" & CStr(s.Nr), 4) & "-" & CStr(j); gb.Tab; wrd; gb.Tab; wrdpin; gb.Tab; wrdtrans; gb.Tab; s.DecodeTrad2(); gb.Tab; Replace(s.DecodeTrad2(), wrd, " ___ "); gb.Tab; s.DecodePin2(); gb.Tab; Utils.ConvertTextToHTML(s.Translation); gb.Tab; "[sound:" & Right("000" & CStr(s.Nr), 4) & ".mp3]"
+        Endif
+      Endif
+    Next
+  Next
+  Close #f
+
+End
+
+Public Sub ExportStatus(filename As String)
+
+  Dim s As Satz
+  Dim f As Stream
+
+  f = Open filename For Output Create
+  For Each s In $SatzArray
+    Print #f, s.Status
+  Next
+  Close #f
+
+End
+
+Public Function FilterSaetze(allsaetze As Saetze, filtertext As String, sortmodus As String, statusmodus As String) As Integer
+
+  Dim i, j As Integer
+  Dim s As Satz
+  Dim f As String = Utils.ConvertPinyin(filtertext)
+
+  If filtertext = "" Then
+    For i = 1 To allsaetze.SaetzeCount()
+      If statusmodus = "Alle" Or If Utils.GetStatusText(allsaetze.GetSatz(i).Status) = statusmodus Then
+        $SatzArray.Add(allsaetze.GetSatz(i))
+      Endif
+    Next
+  Else If String.Left(filtertext, 1) = "|" And String.Right(filtertext, 1) = "|" And String.Len(filtertext) > 4 Then
+    Dim ff As String[] = Split(filtertext, "|")
+    If ff.Max = 3 Then
+      Dim ftrad As String = Trim(ff[1])
+      Dim ftrans As String = Trim(ff[2])
+      For i = 1 To allsaetze.SaetzeCount()
+        s = allsaetze.GetSatz(i)
+        If statusmodus = "Alle" Or If Utils.GetStatusText(s.Status) = statusmodus Then
+          Dim s1 As String[] = Split(s.DecodeTrad, "|")
+          Dim s2 As String[] = Split(s.DecodeTrans, "|")
+          For j = 0 To Min(s1.Max, s2.Max) - 1
+            If s1[j] = ftrad And s2[j] = ftrans Then
+              $SatzArray.Add(s)
+              Break
+            Endif
+          Next
+        Endif
+      Next
+    End If
+  Else
+    For i = 1 To allsaetze.SaetzeCount()
+      s = allsaetze.GetSatz(i)
+      If statusmodus = "Alle" Or If Utils.GetStatusText(s.Status) = statusmodus Then
+        If String.InStr(s.DecodeTrad2(), f, 1, gb.IgnoreCase) > 0 Then
+          $SatzArray.Add(s)
+          Continue
+        Else If String.InStr(s.DecodeSimp2(), f, 1, gb.IgnoreCase) > 0 Then
+          $SatzArray.Add(s)
+          Continue
+        Else If String.InStr(s.Translation, f, 1, gb.IgnoreCase) > 0 Then
+          $SatzArray.Add(s)
+          Continue
+        Else If String.InStr(Utils.ConvertPinyin(s.DecodePin2()), f, 1, gb.IgnoreCase) > 0 Then
+          $SatzArray.Add(s)
+          Continue
+        Else If String.InStr(s.DecodeTrans2(), f, 1, gb.IgnoreCase) > 0 Then
+          $SatzArray.Add(s)
+          Continue
+        Else If String.InStr(Utils.ConvertPinyin(Utils.ConvertHTMLToText(s.WordHTML)), f, 1, gb.IgnoreCase) > 0 Then
+          $SatzArray.Add(s)
+        Endif
+      Endif
+    Next
+  Endif
+  $CurrentSatzNr = 1
+  If sortmodus = "Zufällig" Then $SatzArray.Shuffle
+  If sortmodus = "HSK, Nr." Then $SatzArray.Sort
+  Return $SatzArray.Count
+
+End
+
+Public Function GetCurrentSatz() As Satz
+
+  Return GetSatz($CurrentSatzNr)
+
+End
+
+Public Function GetSatz(i As Integer) As Satz
+
+  If i >= 1 And i <= $SatzArray.Count Then
+    Return $SatzArray[i - 1]
+  Else
+    Return Null
+  Endif
+
+End
+
+Public Function GetVocab() As String[]
+
+  Dim s As Satz
+  Dim simp, trad, pin, trans As String[]
+  Dim i As Integer
+  Dim k As String
+  Dim vcoll, tcoll As Collection
+  Dim arr As String[]
+  Dim arrsort As String[]
+
+  vcoll = New Collection
+  For Each s In $SatzArray
+    trad = Split(s.DecodeTrad, "|")
+    simp = Split(s.DecodeSimp, "|")
+    pin = Split(s.DecodePin, "|")
+    trans = Split(s.DecodeTrans, "|")
+    For i = 0 To trad.Max - 1
+      k = trad[i] & "\t" & simp[i] & "\t" & pin[i]
+      If vcoll.Exist(k) Then
+        If vcoll[k].Exist(trans[i]) Then
+          vcoll[k][trans[i]] = vcoll[k][trans[i]] + 1
+        Else
+          vcoll[k].Add(1, trans[i])
+        Endif
+      Else
+        tcoll = New Collection
+        tcoll.Add(1, trans[i])
+        vcoll.Add(tcoll, k)
+      Endif
+    Next
+  Next
+  arr = New String[]
+  For Each tcoll In vcoll
+    k = vcoll.Key & "\t"
+    For Each i In tcoll
+      arr.Add(k & tcoll.Key & "\t" & CStr(i))
+    Next
+  Next
+  arrsort = arr.Sort()
+  Return arrsort
+
+End
+
+Public Function Import(filename As String, statusfilename As String) As Integer
+
+  Dim f As Stream
+  Dim fs As Stream
+  Dim zeilen As New String[]
+  Dim zeile As String
+  Dim zeilestatus As String
+
+  If Not Exist(filename) Then
+    Utils.AbortMessageAndQuit("Keine Sätze-Datei '" & filename & "'!")
+  Endif
+  If Not Exist(statusfilename) Then
+    Utils.AbortMessageAndQuit("Keine Status-Datei '" & statusfilename & "'!")
+  Endif
+  f = Open filename For Input
+  fs = Open statusfilename For Input
+  zeilen.Clear()
+  While Not Eof(f)
+    Line Input #f, zeile
+    If Trim(zeile) = "###" Then
+      Dim s As New Satz
+      s.FillSatz(zeilen)
+      If Eof(fs) Then
+        s.Status = -1
+      Else
+        Line Input #fs, zeilestatus
+        s.Status = CInt(zeilestatus)
+      Endif
+      $SatzArray.Add(s)
+      zeilen.Clear()
+    Else
+      zeilen.Add(Trim(zeile))
+    Endif
+  Wend
+  Close #f
+  Close #fs
+  $CurrentSatzNr = 1
+  Return $SatzArray.Count
+
+End
+
+Public Sub NewSatz(newtradsatz As String, allvoc As Vocabs)
+
+  Dim s As New Satz
+  Dim mediadir As String = Application.Path & "/.hidden/Media/"
+
+  s.MakeNewSatz(Me.SaetzeCount() + 1, newtradsatz, allvoc)
+  $SatzArray.Add(s)
+  $CurrentSatzNr = $SatzArray.Count
+  Shell "gtts-cli -o \"" & mediadir & s.SoundFile & "\" -l zh-TW \"" & newtradsatz & "\"" Wait
+
+End
+
+Public Sub NextSatz()
+
+  $CurrentSatzNr = $CurrentSatzNr + 1
+  If $CurrentSatzNr > $SatzArray.Count Then
+    $CurrentSatzNr = 1
+  Endif
+
+End
+
+Public Sub PrevSatz()
+
+  $CurrentSatzNr = $CurrentSatzNr - 1
+  If $CurrentSatzNr < 1 Then
+    $CurrentSatzNr = $SatzArray.Count
+  Endif
+
+End
+
+Public Function SaetzeCount() As Integer
+
+  Return $SatzArray.Count
+
+End
+
+Private Sub CurrentSatzNr_Write(Value As Integer)
+
+  If $CurrentSatzNr >= 1 And $CurrentSatzNr <= $SatzArray.Count Then
+    $CurrentSatzNr = Value
+  Endif
+
+End
